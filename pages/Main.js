@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FavoritesContext } from '../context/Favorites';
 import { useNavigation } from '@react-navigation/native';
 
-// Función para obtener los datos de los Pokémon
-const fetchPokemons = async (setPokemons) => {
+const fetchPokemons = async (offset, limit) => {
     try {
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`);
         const data = await response.json();
         const pokemonsWithDetails = await Promise.all(
             data.results.map(async (pokemon) => {
@@ -15,9 +14,25 @@ const fetchPokemons = async (setPokemons) => {
                 return res.json();
             })
         );
-        setPokemons(pokemonsWithDetails);
+        return pokemonsWithDetails;
     } catch (error) {
         console.error(error);
+        return [];
+    }
+};
+
+const fetchFavoritePokemons = async (favoriteIds) => {
+    try {
+        const pokemons = await Promise.all(
+            favoriteIds.map(async (id) => {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                return response.json();
+            })
+        );
+        return pokemons;
+    } catch (error) {
+        console.error(error);
+        return [];
     }
 };
 
@@ -46,48 +61,48 @@ export const getTypeImageUrl = (type) => {
     return typeImages[type] || '';
 };
 
-// Componente para mostrar una tarjeta de Pokémon
+
 const PokemonCard = ({ pokemon, toggleFavorite, isFavorite }) => {
     const navigation = useNavigation();
     return (
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("PokemonDetails", { pokemonId: pokemon.id })}>
             <View style={styles.cardInter}>
-            {/* Botón para agregar a favoritos */}
-            <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(pokemon.id)}>
-                <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={24}
-                    color={isFavorite ? 'red' : 'gray'}
+                <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(pokemon.id)}>
+                    <Ionicons
+                        name={isFavorite ? 'heart' : 'heart-outline'}
+                        size={24}
+                        color={isFavorite ? 'red' : 'gray'}
+                    />
+                </TouchableOpacity>
+                <Image source={{ uri: pokemon.sprites.front_default }} style={styles.pokemonImage} />
+                <Text style={styles.pokemonName}>{pokemon.name}</Text>
+                <Text style={styles.pokemonId}>ID: {pokemon.id}</Text>
+                <Image
+                    source={{ uri: getTypeImageUrl(pokemon.types[0].type.name) }}
+                    style={styles.pokemonTypeImage}
                 />
-            </TouchableOpacity>
-
-            {/* Imagen del Pokémon */}
-            <Image source={{ uri: pokemon.sprites.front_default }} style={styles.pokemonImage} />
-
-            {/* Nombre del Pokémon */}
-            <Text style={styles.pokemonName}>{pokemon.name}</Text>
-
-            {/* ID del Pokémon */}
-            <Text style={styles.pokemonId}>ID: {pokemon.id}</Text>
-
-            {/* Imagen del tipo de Pokémon */}
-            <Image
-                source={{ uri: getTypeImageUrl(pokemon.types[0].type.name) }}
-                style={styles.pokemonTypeImage}
-            />
-        </View>
+            </View>
         </TouchableOpacity>
-
     );
 };
 
-// Pokedex
 export const PokedexScreen = () => {
     const [pokemons, setPokemons] = useState([]);
-    const { favorites, toggleFavorite } = useContext(FavoritesContext); // Consumimos el contexto
+    const [offset, setOffset] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const { favorites, toggleFavorite } = useContext(FavoritesContext);
+
+    const loadPokemons = async () => {
+        if (loading) return;
+        setLoading(true);
+        const newPokemons = await fetchPokemons(offset, 20); // Cargar 20 Pokémon a la vez
+        setPokemons((prev) => [...prev, ...newPokemons]);
+        setOffset((prev) => prev + 20);
+        setLoading(false);
+    };
 
     useEffect(() => {
-        fetchPokemons(setPokemons);
+        loadPokemons();
     }, []);
 
     return (
@@ -103,29 +118,42 @@ export const PokedexScreen = () => {
                     />
                 )}
                 numColumns={2}
+                onEndReached={loadPokemons} // Cargar más Pokémon al llegar al final
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loading && <ActivityIndicator size="large" color="#0000ff" />}
             />
         </View>
     );
 };
 
 
-//Favoritos
+// Favoritos
 export const FavoritesScreen = () => {
-    const { favorites, toggleFavorite } = useContext(FavoritesContext); // Consumimos el contexto
+    const { favorites, toggleFavorite } = useContext(FavoritesContext);
     const [pokemons, setPokemons] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [text, setText] = useState("Cargando...");
 
     useEffect(() => {
-        fetchPokemons(setPokemons);
-    }, []);
-
-    // Filtramos los Pokémon que están en la lista de favoritos
-    const favoritePokemons = pokemons.filter((pokemon) => favorites.includes(pokemon.id));
+        if (favorites.length > 0) {
+            setLoading(true);
+            fetchFavoritePokemons(favorites).then((fetchedPokemons) => {
+                setPokemons(fetchedPokemons);
+                setLoading(false);
+            });
+        } else {
+            setPokemons([]); // Si no hay favoritos, se limpia el estado
+            setText("No tienes favoritos aún");
+        }
+    }, [favorites]);
 
     return (
         <View style={styles.container}>
-            {favoritePokemons.length > 0 ? (
+            {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+            ) : pokemons.length > 0 ? (
                 <FlatList
-                    data={favoritePokemons}
+                        data={pokemons}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <PokemonCard
@@ -137,7 +165,7 @@ export const FavoritesScreen = () => {
                     numColumns={2}
                 />
             ) : (
-                <Text style={styles.text}>No tienes favoritos aún</Text>
+                        <Text style={styles.text}>{text}</Text>
             )}
         </View>
     );
