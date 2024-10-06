@@ -6,18 +6,16 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 // Pages
 import { PokedexScreen, FavoritesScreen } from '../pages/Main';
+import PokemonDetailsScreen from '../pages/PokemonDetails';
 import Login from "../pages/Login";
 import Register from '../pages/Register';
 import { signOut } from 'firebase/auth';
-import { auth } from '../bd/firebase'; // Importa tu configuración de Firebase
+import { auth } from '../bd/firebase';
 
-
-// Crear los navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// Componente para la navegación por pestañas (Pokedex y Favoritos)
 const MainTabs = () => {
     return (
         <Tab.Navigator
@@ -41,7 +39,6 @@ const MainTabs = () => {
     );
 };
 
-// Agregar Drawer Navigator que envuelve las tabs
 const DrawerNavigator = () => {
     return (
         <Drawer.Navigator>
@@ -85,7 +82,6 @@ const Navigation = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator>
-                {/* Pantallas de Login y Registro */}
                 <Stack.Screen
                     name="Login"
                     component={Login}
@@ -96,13 +92,19 @@ const Navigation = () => {
                     component={Register}
                     options={{ title: 'Registrar', headerShown: false }}
                 />
-                {/* Pantalla principal que incluye el Drawer Navigator */}
                 <Stack.Screen
                     name="Main"
                     component={DrawerNavigator}
                     options={{
                         title: 'Pokedex',
-                        headerShown: false, // Ocultar el header del Stack ya que se usa en el Drawer
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="PokemonDetails"
+                    component={PokemonDetailsScreen}
+                    options={{
+                        title: 'Detalles del Pokémon',
                     }}
                 />
             </Stack.Navigator>

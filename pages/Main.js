@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FavoritesContext } from '../context/Favorites';
+import { useNavigation } from '@react-navigation/native';
 
 // Función para obtener los datos de los Pokémon
 const fetchPokemons = async (setPokemons) => {
@@ -21,7 +22,7 @@ const fetchPokemons = async (setPokemons) => {
 };
 
 // Función para obtener la URL de la imagen del tipo
-const getTypeImageUrl = (type) => {
+export const getTypeImageUrl = (type) => {
     const typeImages = {
         bug: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/e8ddc4da-23dd-4502-b65b-378c9cfe5efa/dffvl73-294f6e5b-aad2-484f-bde8-1ecf082f1dfe.png/v1/fill/w_894,h_894/bug_type_symbol_galar_by_jormxdos_dffvl73-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTI4MCIsInBhdGgiOiJcL2ZcL2U4ZGRjNGRhLTIzZGQtNDUwMi1iNjViLTM3OGM5Y2ZlNWVmYVwvZGZmdmw3My0yOTRmNmU1Yi1hYWQyLTQ4NGYtYmRlOC0xZWNmMDgyZjFkZmUucG5nIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.msN6ZkYf5XuPiA27qO-1Zaow3B4iSRqp3nAHzctfBW0',
         dark: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Pok%C3%A9mon_Dark_Type_Icon.svg/1200px-Pok%C3%A9mon_Dark_Type_Icon.svg.png',
@@ -47,8 +48,10 @@ const getTypeImageUrl = (type) => {
 
 // Componente para mostrar una tarjeta de Pokémon
 const PokemonCard = ({ pokemon, toggleFavorite, isFavorite }) => {
+    const navigation = useNavigation();
     return (
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("PokemonDetails", { pokemonId: pokemon.id })}>
+            <View style={styles.cardInter}>
             {/* Botón para agregar a favoritos */}
             <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(pokemon.id)}>
                 <Ionicons
@@ -73,6 +76,8 @@ const PokemonCard = ({ pokemon, toggleFavorite, isFavorite }) => {
                 style={styles.pokemonTypeImage}
             />
         </View>
+        </TouchableOpacity>
+
     );
 };
 
@@ -155,6 +160,11 @@ const styles = StyleSheet.create({
         elevation: 4,
         position: 'relative',
     },
+    cardInter: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+    },
     pokemonImage: {
         width: 80,
         height: 80,
@@ -176,8 +186,8 @@ const styles = StyleSheet.create({
     },
     favoriteButton: {
         position: 'absolute',
-        top: 10,
-        right: 10,
+        top: 0,
+        right: 0,
     },
     text: {
         fontSize: 24,
