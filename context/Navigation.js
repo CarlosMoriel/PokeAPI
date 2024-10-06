@@ -8,6 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { PokedexScreen, FavoritesScreen } from '../pages/Main';
 import Login from "../pages/Login";
 import Register from '../pages/Register';
+import { signOut } from 'firebase/auth';
+import { auth } from '../bd/firebase'; // Importa tu configuración de Firebase
+
 
 // Crear los navigators
 const Stack = createNativeStackNavigator();
@@ -58,6 +61,20 @@ const DrawerNavigator = () => {
 // Componente para cerrar sesión
 const LogoutScreen = ({ navigation }) => {
     navigation.replace('Login')
+  
+        signOut(auth)
+          .then(() => {
+            // Sesión cerrada correctamente
+            console.log("Sesión cerrada");
+            // Aquí puedes redirigir al usuario a la pantalla de inicio de sesión u otra pantalla
+            navigation.navigate("Login");
+          })
+          .catch((error) => {
+            // Ocurrió un error al cerrar la sesión
+            console.error("Error al cerrar sesión:", error);
+            alert("No se pudo cerrar la sesión, intenta nuevamente.");
+          });
+     
     return (
         <></>
     );
