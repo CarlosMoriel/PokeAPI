@@ -11,6 +11,7 @@ import Login from "../pages/Login";
 import Register from '../pages/Register';
 import { signOut } from 'firebase/auth';
 import { auth } from '../bd/firebase';
+import { FavoritesContext } from './Favorites';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -57,14 +58,17 @@ const DrawerNavigator = () => {
 
 // Componente para cerrar sesión
 const LogoutScreen = ({ navigation }) => {
+    const { setFavorites } = React.useContext(FavoritesContext);
     navigation.replace('Login')
   
         signOut(auth)
           .then(() => {
+              setFavorites([]);
             // Sesión cerrada correctamente
             console.log("Sesión cerrada");
             // Aquí puedes redirigir al usuario a la pantalla de inicio de sesión u otra pantalla
             navigation.navigate("Login");
+
           })
           .catch((error) => {
             // Ocurrió un error al cerrar la sesión

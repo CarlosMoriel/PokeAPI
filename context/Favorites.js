@@ -8,8 +8,6 @@ export const FavoritesContext = createContext();
 // Proveedor del contexto
 export const FavoritesProvider = ({ children }) => {
     const [favorites, setFavorites] = useState([]);
-    console.log("Favs -----------");
-    console.log(favorites);
     // Función para obtener favoritos del usuario autenticado
     const fetchFavorites = async () => {
         if (auth.currentUser) {
@@ -55,7 +53,7 @@ export const FavoritesProvider = ({ children }) => {
     }, [favorites]);
 
     return (
-        <FavoritesContext.Provider value={{ favorites, toggleFavorite }}>
+        <FavoritesContext.Provider value={{ favorites, toggleFavorite, setFavorites }}>
             {children}
         </FavoritesContext.Provider>
     );

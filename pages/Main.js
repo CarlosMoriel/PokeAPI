@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndi
 import { Ionicons } from '@expo/vector-icons';
 import { FavoritesContext } from '../context/Favorites';
 import { useNavigation } from '@react-navigation/native';
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from '../bd/firebase';
 
 const fetchPokemons = async (offset, limit) => {
     try {
@@ -90,7 +92,24 @@ export const PokedexScreen = () => {
     const [pokemons, setPokemons] = useState([]);
     const [offset, setOffset] = useState(0);
     const [loading, setLoading] = useState(false);
-    const { favorites, toggleFavorite } = useContext(FavoritesContext);
+    const { favorites, toggleFavorite, setFavorites } = useContext(FavoritesContext);
+
+    const fetchFavorites = async () => {
+        if (auth.currentUser) {
+            const docRef = doc(db, "fav", auth.currentUser.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const docData = docSnap.data();
+                console.log("Document data:", docData);
+                return docData.favs;
+            } else {
+                return [];
+            }
+        }
+        return [];
+    };
+
 
     const loadPokemons = async () => {
         if (loading) return;
@@ -103,6 +122,12 @@ export const PokedexScreen = () => {
 
     useEffect(() => {
         loadPokemons();
+
+        const getFavorites = async () => {
+            const fetchedFavorites = await fetchFavorites();
+            setFavorites(fetchedFavorites);
+        };
+        getFavorites();
     }, []);
 
     return (
